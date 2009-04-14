@@ -1,9 +1,10 @@
 ---
-ru-RU:
+ru-RU: 
   a_copy_of_all_mail_will_be_sent_to_the_following_addresses: Копии всех писем будут отосланы на следующие адреса
   abbreviation: Аббревиатура
   access_denied: "Доступ запрещен"
   account: Учетная запись
+  account_updated: "Account updated!"        
   action: Действие
   actions:
     cancel: Отменить
@@ -56,6 +57,7 @@ ru-RU:
         master_price: "master price ??"
         name: Name
         on_hand: "On Hand ?"
+        shipping_category: "Категория доставки"
       property:
         name: Наименование
         presentation: Представление?
@@ -124,6 +126,9 @@ ru-RU:
       role:
         one: Роль
         other: Роли
+      shipping_category: 
+        one: "Категория доставки"
+        other: "Категории доставки"
       state:
         one: Статус
         other: Статусы
@@ -207,6 +212,7 @@ ru-RU:
   credit_card: "Кредитная карта"
   credit_card_capture_complete: "Credit Card Was Captured ??"
   credit_card_payment: "Платеж крелитной картой"
+  creditcard: Creditcard
   current: Текущий
   customer: Пользователь
   date_range: "Период времени"
@@ -222,6 +228,8 @@ ru-RU:
   editing_product: "Редактирование продукта"
   editing_property: "Редактирование свойства"
   editing_prototype: "Редактирование прототипа"
+  editing_shipping_category: "Редактировать категорию доставки"
+  editing_shipping_method: "Редактировать способ доставки"
   editing_state: "Редактирование статуса"
   editing_tax_category: "Редактирование категории налога"
   editing_user: "Редактирование пользователя"
@@ -234,6 +242,7 @@ ru-RU:
   error: ошибка
   event: Событие
   existing_customer: "Для зарегистрированных пользователей"
+  expiration: Expiration
   expiration_month: "Месяц экспирации ??"
   expiration_year: "Год экспирации ??"
   extension: Расширение
@@ -241,9 +250,11 @@ ru-RU:
   filename: Имя Файла
   final_confirmation: "Финальное подтверждение"
   first_name: "Имя"
+  forgot_password: "Forgot Password"
   gateway: Платежный шлюз ??
   gateway_error: "Ошибка платежного шлюза ??"
   gateway_setting_description: "Выберите платежный шлюз и настройте его."
+  general: "General"
   general_settings: "Общие настройки"
   general_settings_description: "Общие настройки Spree."
   google_analytics: "Google Analytics"
@@ -254,6 +265,8 @@ ru-RU:
   google_analytics_setting_description: "Управление Google Analytics ID"
   height: Высота
   hello_user: "Добро пожаловать"
+  history: History
+  home: "Home"
   image: Картинка
   images: Картинки
   in_progress: "В процессе"
@@ -276,13 +289,18 @@ ru-RU:
   locale_changed: "Локаль изменена"
   log_in: "Зайти"
   logged_in_as: "Пользователь"
+  logged_in_succesfully: "Logged in successfully"
+  logged_out: "You have been logged out." 
+  login_failed: "Login authentication failed."      
   login_name: Логин
   logout: Выйти
   mail_delivery_enabled: "Доставка почты включена"
   mail_delivery_not_enabled: "Доставка почты не включена"
   mail_server_preferences: Настройки почтового сервера
   mail_server_settings: "Установки почтового сервера"
+  mark_shipped: "Отметить как доставленный"
   master_price: "Master Price"
+  month: "Month"
   my_account: "Моя учетная запись"
   my_orders: "Мои заказы"
   name: Название
@@ -297,6 +315,8 @@ ru-RU:
   new_property: "Новое свойство"
   new_prototype: "Новый прототип"
   new_shipment: "Ноавя доставка"
+  new_shipping_category: "Новая категория доставки"
+  new_shipping_method: "Новый способ доставки"
   new_state: "Новая область"
   new_tax_category: "Новая категория налогов"
   new_tax_rate: "Новая ставка налога"
@@ -307,6 +327,7 @@ ru-RU:
   next: След.
   no_items_in_cart: ""
   no_match_found: "Совпадений не найдено"
+  no_user_found: "No user was found with that email address"
   none: Ни одного
   none_available: "Нет в наличии"
   on_hand: "On Hand"
@@ -333,6 +354,10 @@ ru-RU:
   paid: Оплачен
   parent_category: "Родительская категория"
   password: Пароль
+  password_reset_instructions: "Password Reset Instructions"
+  password_reset_instructions_are_mailed: "Instructions to reset your password have been emailed to you. Please check your email."
+  password_reset_token_not_found: "We're sorry, but we could not locate your account. If you are having issues try copying and pasting the URL from your email into your browser or restarting the reset password process."    
+  password_updated: "Password successfully updated"  
   path: Путь
   pay: оплатить
   payment: Платеж
@@ -340,6 +365,7 @@ ru-RU:
   payment_information: "Информация о платеже"
   payments: Платежи
   phone: Телефон
+  place_order: Place Order        
   presentation: Презентация ??
   previous: предыдущий
   price: Цена
@@ -353,6 +379,7 @@ ru-RU:
   products: Продукты
   properties: Свойства
   property: Свойство
+  prototype: Prototype
   prototypes: Прототипы
   qty: Кол-во
   rate: rate ??
@@ -360,6 +387,7 @@ ru-RU:
   remove: Убрать
   reports: отчеты
   resend: Отослать повторно
+  reset_password: "Reset my password"
   response_code: "Response Code"
   resume: "возобновить"
   resumed: Возобновлен
@@ -375,6 +403,7 @@ ru-RU:
   secure_connection_type: Тип защищенного соединения
   select: Выбрать
   select_from_prototype: "Выбрать из прототипов"
+  select_preferred_shipping_option: "Выберите предпочитаемый способ доставки"
   send_copy_of_all_mails_to: Отсылать копии всех писем на
   send_copy_of_orders_mails_to: Отсылать копии всех писем с заказами на
   send_mails_as: Отсылать почту как
@@ -382,18 +411,29 @@ ru-RU:
   ship: доставка
   ship_address: "Ship Address"
   shipment: Доставка
+  shipment_number: "Доставка #"
   shipped: Доставлено
   shipping: Доставка
   shipping_address: "Адрес доставки"
+  shipping_calculator: Калькулятор
+  shipping_categories: "Категории доставки"
+  shipping_categories_description: "Настройка категорий доставки - укажите, какие продукты могут быть доставлены какими способами"
+  shipping_cost: Стоимость
   shipping_error: "Ошибка при доставке"
-  shipping_method: "Тип доставки"
+  shipping_method: Способ
+  shipping_methods: "Способы доставки"
+  shipping_methods_description: "Управление методами доставки"
   shipping_total: "Итого за доставку"
   shopping_cart: "Корзина"
   show_deleted: "Показать удаленные"
   show_incomplete_orders: "Показать необработанные заказы"
+  show_only_complete_orders: "Only show complete orders"
   show_out_of_stock_products: "Показать продукты, которых нет в наличии"
   sign_up: "Регистрация"
+  site_name: "Site Name"
+  site_url: "Site URL"
   sku: SKU
+  smtp: SMTP
   smtp_authentication_type: "Тип SMTP Аутентификации"
   smtp_domain: SMTP Domain
   smtp_mail_host: SMTP Mail Host
@@ -428,16 +468,24 @@ ru-RU:
   taxons: Таксоны
   thank_you_for_your_order: "Thank you for your business.  Please print out a copy of this confirmation page for your records."
   this_file_language: "Русский (RU)"
+  to_add_variants_you_must_first_define: "To add variants, you must first define"
   total: Итого
+  tracking: Отслеживание
   transaction: Транзакция
   tree: Дерево
   try_again: "Попробуйте еще раз"
   type: Тип
+  unable_to_authorize_credit_card: "Unable to Authorize Credit Card"
   unable_to_capture_credit_card: "Unable to Capture Credit Card"
+  unable_to_save_order: "Unable to Save Order"
   update: Изменить
+  update_password: "Update my password and log me in"                    
   updated_successfully: "Успешна изменена"
+  use_as_shipping_address: Use as Shipping Address
+  use_billing_address: Use Billing Address
   use_different_shipping_address: "использовать другой адрес доставки"
   user: Пользователь
+  user_account: User Account
   user_details: "Дополнительно"
   users: Пользователи
   value: Значение
@@ -450,6 +498,8 @@ ru-RU:
   what_is_this: "Что это ?"
   whats_this: "Что это"
   width: Ширина
+  year: "Year"
+  you_have_been_logged_out: "You have been logged out."
   your_cart_is_empty: "Ваша корзина пуста"
   zip: Индекс
   zone: Зона
