@@ -1,25 +1,3 @@
-var regions = new Array('billing', 'shipping', 'shipping_method', 'creditcard', 'confirm_order');
-
-$(document).ajaxSend(function(event, request, settings) {
-  if (typeof(AUTH_TOKEN) == "undefined") return;
-  // settings.data is a serialized string like "foo=bar&baz=boink" (or null)
-  settings.data = settings.data || "";
-  settings.data += (settings.data ? "&" : "") + "authenticity_token=" + encodeURIComponent(AUTH_TOKEN);
-});
-
-// public/javascripts/application.js
-jQuery.ajaxSetup({ 
-  'beforeSend': function(xhr) {xhr.setRequestHeader("Accept", "text/javascript")}
-})
-
-jQuery.fn.submitWithAjax = function() {
-  this.change(function() {
-    $.post('select_country', $(this).serialize(), null, "script");
-    return false;
-  })
-  return this;
-};
-
 jQuery.fn.sameAddress = function() {
   this.click(function() {
     if(!$(this).attr('checked')) {
@@ -36,17 +14,17 @@ jQuery.fn.sameAddress = function() {
 
 //On page load
 $(function() {  
-  //$("#checkout_presenter_bill_address_country_id").submitWithAjax();  
-  $('#checkout_presenter_same_address').sameAddress();
+  $('#checkout_same_address').sameAddress();
   $('span#bcountry select').change(function() { update_state('b'); });
   $('span#scountry select').change(function() { update_state('s'); });
   get_states();
-
-  $('#validate_billing').click(function() { if(validate_section('billing')) { submit_billing(); }});
-  $('#validate_shipping').click(function() { if(validate_section('shipping')) { submit_shipping(); }});
-  $('#select_shipping_method').click(function() { submit_shipping_method(); });  
-  $('#confirm_payment').click(function() { if(validate_section('creditcard')) { confirm_payment(); }});
-  $('form#checkout_form').submit(function() { return !($('div#confirm_order').hasClass('checkout_disabled')); }); 
+  
+  // hook up the continue buttons for each section
+  for(var i=0; i < regions.length; i++) {                               
+    $('#continue_' + regions[i]).click(function() { eval( "continue_button(this);") });   
+  }                           
+  // activate first region
+  shift_to_region(regions[0]); 
 })
 
 //Initial state mapper on page load
@@ -88,7 +66,6 @@ var chg_state_input_element = function (parent, html) {
 
 // TODO: better as sibling dummy state ?
 // Update the input method for address.state 
-//
 var update_state = function(region) {
   var country        = $('span#' + region + 'country :only-child').val();
   var states         = state_mapper[country];
@@ -98,12 +75,13 @@ var update_state = function(region) {
   if(states) {
     // recreate state selection list
     replacement = $(document.createElement('select'));
-    $.each(states, function(id,nm) {
+    var states_with_blank = [["",""]].concat(states);
+    $.each(states_with_blank, function(pos,id_nm) {
       var opt = $(document.createElement('option'))
-                .attr('value', id)
-                .html(nm);
-      replacement.append(opt)
-      if (id == hidden_element.val()) { opt.attr('selected', 'true') }
+                .attr('value', id_nm[0])
+                .html(id_nm[1]);
+      replacement.append(opt);
+      if (id_nm[0] == hidden_element.val()) { opt.attr('selected', 'true') }
         // set this directly IFF the old value is still valid
     });
   } else {
@@ -121,8 +99,24 @@ var update_state = function(region) {
   replacement.change(function() {
     $('input#hidden_' + region + 'state').val($(this).val());
   });
-};
+};       
 
+var continue_button = function(button) {
+  var section = button.id.substring(9);
+  // validate
+  if (!validate_section(section)) { return; };
+  // submit
+  var success = eval("submit_" + section + "();");
+  if (!success) { return; }
+  // move to next section      
+  for(var i=0; i<regions.length; i++) {
+    if (regions[i] == section) {
+      if (i == (regions.length - 1)) { break; };
+      shift_to_region(regions[i+1]);
+    }
+  }
+  
+};
 
 var validate_section = function(region) {
   var validator = $('form#checkout_form').validate();
@@ -156,7 +150,7 @@ var shift_to_region = function(active) {
       $('div#' + regions[i]).addClass('checkout_disabled');
     }
   }                                                                         
-  if (active == 'confirm_order') {
+  if (active == 'confirmation') {
     $("input#final_answer").attr("value", "yes");    
   } else {
     // indicates order is ready to be processed (as opposed to simply updated)
@@ -166,9 +160,8 @@ var shift_to_region = function(active) {
 };
 
 var submit_billing = function() {
-  shift_to_region('shipping');
   build_address('Billing Address', 'b');
-  return;
+  return true;
 };
 
 var build_address = function(title, region) {
@@ -197,7 +190,7 @@ var submit_shipping = function() {
   // Save what we have so far and get the list of shipping methods via AJAX
   $.ajax({
     type: "POST",
-    url: 'complete',                                 
+    url: 'checkout',                                 
     beforeSend : function (xhr) {
       xhr.setRequestHeader('Accept-Encoding', 'identity');
     },      
@@ -208,12 +201,12 @@ var submit_shipping = function() {
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
       // TODO - put some real error handling in here
-      $("#error").html(XMLHttpRequest.responseText);
+      $("#error").html(XMLHttpRequest.responseText); 
+      return false;
     }
   });  
-  shift_to_region('shipping_method');
   build_address('Shipping Address', 's');
-  return;
+  return true;
 };
                      
 var submit_shipping_method = function() {
@@ -228,7 +221,7 @@ var submit_shipping_method = function() {
     // Save what we have so far and get the updated order totals via AJAX
     $.ajax({
       type: "POST",
-      url: 'complete',                                 
+      url: 'checkout',                                 
       beforeSend : function (xhr) {
         xhr.setRequestHeader('Accept-Encoding', 'identity');
       },      
@@ -239,14 +232,16 @@ var submit_shipping_method = function() {
       },
       error: function (XMLHttpRequest, textStatus, errorThrown) {
         // TODO - put some real error handling in here
-        //$("#error").html(XMLHttpRequest.responseText);
+        //$("#error").html(XMLHttpRequest.responseText);           
+        return false;
       }
     });  
-    shift_to_region('creditcard');
+    return true;
   } else {
     var p = document.createElement('p');
     $(p).append($(document.createElement('label')).addClass('error').html('Please select a shipping method').css('width', '300px').css('top', '0px'));
     $('div#methods').append(p);
+    return false;
   }
 }; 
 
@@ -255,18 +250,21 @@ var update_shipping_methods = function(methods) {
     $('div$methods img#shipping_loader').remove();
     var p = document.createElement('p');
     var s = this.name + ' ' + this.rate;
-    $(p).append($(document.createElement('input'))
-                .attr('id', s)
+    var i = $(document.createElement('input'))
+                .attr('id', this.id)
                 .attr('type', 'radio')
                 .attr('name', 'method_id')
-                .attr(1 == $(methods).length ? 'checked' : 'notchecked', 'foo')
                 .val(this.id)
-                );
-    $(p).append($(document.createElement('label'))
+                .click(function() { $('div#methods input').attr('checked', ''); $(this).attr('checked', 'checked'); });
+    if($(methods).length == 1) {
+      i.attr('checked', 'checked');
+    }
+    var l = $(document.createElement('label'))
                 .attr('for', s)
                 .html(s)
-                .css('top', '-1px'));
-    $('div#methods').append(p);
+                .css('top', '-1px')
+                .css('width', '300px');
+    $('div#methods').append($(p).append(i).append(l));
   });
   $('div#methods input:first').attr('validate', 'required:true');
   return;
@@ -279,6 +277,10 @@ var update_confirmation = function(order) {
   $('span#ship_method').html(order.ship_method);                                    
 }
 
-var confirm_payment = function() {
-  shift_to_region('confirm_order');
+var submit_payment = function() {             
+  return true;
+};    
+
+var submit_confirmation = function() {  
+  return true;
 };

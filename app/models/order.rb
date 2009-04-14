@@ -2,11 +2,7 @@ class Order < ActiveRecord::Base
 #  before_create :generate_order_number
   before_save :update_line_items
   
-  has_many :line_items, :dependent => :destroy, :attributes => true do
-    def in_order(variant)
-      find :first, :conditions => ['variant_id = ?', variant.id]
-    end
-  end
+  has_many :line_items, :dependent => :destroy, :attributes => true
   has_many :inventory_units
   has_many :state_events
   has_many :payments
@@ -14,7 +10,11 @@ class Order < ActiveRecord::Base
   has_many :creditcards
   belongs_to :user
   has_many :shipments, :dependent => :destroy
-
+  belongs_to :bill_address, :foreign_key => "bill_address_id", :class_name => "Address"
+  belongs_to :ship_address, :foreign_key => "ship_address_id", :class_name => "Address"
+  accepts_nested_attributes_for :creditcards, :reject_if => proc { |attributes| attributes['number'].blank? }  
+  accepts_nested_attributes_for :ship_address, :bill_address
+  
   validates_associated :line_items, :message => "are not valid"
   validates_numericality_of :tax_amount
   validates_numericality_of :ship_amount
@@ -87,7 +87,7 @@ class Order < ActiveRecord::Base
   end
   
   def add_variant(variant, quantity=1)
-    current_item = line_items.in_order(variant)
+    current_item = contains?(variant)
     if current_item
       current_item.increment_quantity unless quantity > 1
       current_item.quantity = (current_item.quantity + quantity) if quantity > 1
@@ -137,30 +137,32 @@ class Order < ActiveRecord::Base
     self.total = self.item_total + self.ship_amount + self.tax_amount
   end 
  
-  def bill_address
-    return nil if creditcards.empty?
-    return creditcards.last.address
-  end
-
   # convenience method since many stores will not allow user to create multiple shipments
   def shipment
     shipments.last
   end
   
-  def ship_address
-    return nil if shipments.empty?
-    return shipment.address
-  end      
+  def contains?(variant)
+    line_items.select { |line_item| line_item.variant == variant }.first
+  end
  
-  include Spree::ShippingCalculator
- 
-  private
-  def complete_order
-    self.update_attribute(:checkout_complete, true)
-    InventoryUnit.sell_units(self)
-    if user && user.email
-      OrderMailer.deliver_confirm(self)
-    end   
+  def mark_shipped
+    inventory_units.each do |inventory_unit|
+      inventory_unit.ship!
+    end
+  end
+      
+  # collection of available shipping countries
+  def shipping_countries
+    ShippingMethod.all.collect { |method| method.zone.country_list }.flatten.uniq.sort_by {|item| item.send 'name'}
+  end
+  
+  def shipping_methods
+    return [] unless ship_address
+    ShippingMethod.all.select { |method| method.zone.include?(ship_address) && method.available?(self) }
+  end
+   
+  def update_totals
     # finalize order totals 
     unless shipment.nil?
       calculator = shipment.shipping_method.shipping_calculator.constantize.new
@@ -169,8 +171,18 @@ class Order < ActiveRecord::Base
       self.ship_amount = 0
     end
     self.tax_amount = calculate_tax
-    save
   end
+
+  private
+  def complete_order
+    self.update_attribute(:checkout_complete, true)
+    InventoryUnit.sell_units(self)
+    if user && user.email
+      OrderMailer.deliver_confirm(self)
+    end   
+    update_totals
+    save
+  end   
   
   def cancel_order
     restock_inventory

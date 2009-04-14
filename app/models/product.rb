@@ -10,11 +10,13 @@ class Product < ActiveRecord::Base
   has_many :properties, :through => :product_properties
   belongs_to :tax_category
   has_and_belongs_to_many :taxons
+  belongs_to :shipping_category
   
 
   validates_presence_of :name
   validates_presence_of :master_price
-  validates_presence_of :description
+
+  accepts_nested_attributes_for :product_properties
   
   make_permalink
 
@@ -25,6 +27,10 @@ class Product < ActiveRecord::Base
   named_scope :not_deleted, lambda { |*args| { :conditions => ["products.deleted_at is null", (args.first || Time.zone.now)] } }
   
   named_scope :available, lambda { |*args| { :conditions => ["products.available_on <= ?", (args.first || Time.zone.now)] } }
+
+
+  named_scope :with_property_value, lambda { |property_id, value| { :include => :product_properties, :conditions => ["product_properties.property_id = ? AND product_properties.value = ?", property_id, value] } }
+
                  
   def to_param       
     return permalink unless permalink.blank?
@@ -68,6 +74,26 @@ class Product < ActiveRecord::Base
   def has_stock?
     variants.inject(false){ |tf, v| tf ||= v.in_stock }
   end
+  
+  
+  # Adding properties and option types on creation based on a chosen prototype
+  
+  attr_reader :prototype_id
+  def prototype_id=(value)
+    @prototype_id = value.to_i
+  end
+  after_create :add_properties_and_option_types_from_prototype
+  
+  def add_properties_and_option_types_from_prototype
+    if prototype_id and prototype = Prototype.find_by_id(prototype_id)
+      prototype.properties.each do |property|
+        product_properties.create(:property => property)
+      end
+      self.option_types = prototype.option_types
+    end
+  end
+  
+  
   
   private
 

@@ -1,8 +1,9 @@
-class OrdersController < Spree::BaseController
-#  before_filter :load_object, :only => [:checkout]          
-  before_filter :prevent_editing_complete_order, :only => [:edit, :update]            
+class OrdersController < Spree::BaseController     
+  include ActionView::Helpers::NumberHelper # Needed for JS usable rate information
+  
+  before_filter :prevent_editing_complete_order, :only => [:edit, :update, :checkout]            
 
-  ssl_required :show
+  ssl_required :show, :checkout
 
   resource_controller
   actions :all, :except => :index
@@ -12,14 +13,17 @@ class OrdersController < Spree::BaseController
   helper :products
 
   create.after do    
-    # add the specified products in given quantities to the order
-    # the information is specified in a hash.
+    params[:products].each do |product_id,variant_id|
+      quantity = params[:quantity].to_i if !params[:quantity].is_a?(Array)
+      quantity = params[:quantity][variant_id].to_i  if params[:quantity].is_a?(Array)
+      @order.add_variant(Variant.find(variant_id), quantity) if quantity > 0
+    end if params[:products]
     
-    params[:quantities].each do |product_id,vq|
-      (variant_id,quantity) = vq.split '='
+    params[:variants].each do |variant_id, quantity|
       quantity = quantity.to_i
       @order.add_variant(Variant.find(variant_id), quantity) if quantity > 0
-    end
+    end if params[:variants]
+    
     @order.save
   end
 
@@ -38,27 +42,37 @@ class OrdersController < Spree::BaseController
   destroy do
     flash nil 
     wants.html {redirect_to new_order_url}
-  end
+  end   
+                                   
+  # feel free to override this library in your own extension
+  include Spree::Checkout
     
   private
   def build_object        
-    find_order
+    @object ||= find_order
   end
   
-  def object
-    if params[:id]
-      begin
-        @order = Order.find_by_param! params[:id]
-      rescue ActiveRecord::RecordNotFound
-        @order = find_order
-      ensure
-        return @order
-      end
-    end
+  def object 
+    return Order.find_by_number(params[:id]) if params[:id]
     find_order
   end   
   
-  def prevent_editing_complete_order
+  def prevent_editing_complete_order      
+    load_object
     redirect_to object_url if @order.checkout_complete
-  end
+  end         
+  
+  def load_data     
+    @default_country = Country.find Spree::Config[:default_country_id]
+    @countries = Country.find(:all).sort  
+    @shipping_countries = @order.shipping_countries.sort  
+    @states = @default_country.states.sort
+  end 
+  
+  def rate_hash       
+    shipment = @order.shipments.last
+    @order.shipping_methods.collect { |ship_method| {:id => ship_method.id, 
+                                                     :name => ship_method.name, 
+                                                     :rate => number_to_currency(ship_method.calculate_shipping(shipment)) } }    
+  end 
 end
