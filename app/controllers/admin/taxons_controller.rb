@@ -107,7 +107,11 @@ class Admin::TaxonsController < Admin::BaseController
     else
       @available_taxons = Taxon.find(:all, :conditions => ['lower(name) LIKE ?', "%#{params[:q].downcase}%"])
     end
-    @available_taxons.delete_if { |taxon| @product.taxons.include?(taxon) }
+    @available_taxons.delete_if do |taxon| 
+      @product.taxons.include?(taxon) ||
+      !taxon.leaf? ||
+      !(taxon.product_group.nil? || taxon.product_group.respond_to?(:<<))
+    end
     respond_to do |format|
       format.html
       format.js {render :layout => false}
@@ -116,8 +120,7 @@ class Admin::TaxonsController < Admin::BaseController
   end
   
   def remove
-    @product.taxons.delete(@taxon)
-    @product.save
+    @taxon.product_group.remove(@product)
     @taxons = @product.taxons
     render :layout => false
   end  
@@ -125,8 +128,19 @@ class Admin::TaxonsController < Admin::BaseController
   def select
     @product = Product.find_by_param!(params[:product_id])
     taxon = Taxon.find(params[:id])
-    @product.taxons << taxon
-    @product.save
+    if taxon.product_group.nil?
+      logger.debug("Setting up a new product group")
+      list = ProductGroupList.new
+      list.save
+      group = ProductGroup.new(:name => taxon.permalink,
+                               :group => list )
+      group.save
+      taxon.product_group = group
+      taxon.save
+      logger.debug("Taxon: #{taxon.inspect}")
+    end
+    logger.debug("Taxon: #{taxon.inspect}, #{taxon.product_group.inspect}")
+    taxon.product_group << @product
     @taxons = @product.taxons
     render :layout => false
   end
