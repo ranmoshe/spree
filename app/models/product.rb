@@ -8,10 +8,22 @@ class Product < ActiveRecord::Base
   has_many :images, :as => :viewable, :order => :position, :dependent => :destroy
   has_many :product_properties, :dependent => :destroy, :attributes => true
   has_many :properties, :through => :product_properties
+  has_many :product_group_list_nodes
   belongs_to :tax_category
-  has_and_belongs_to_many :taxons
+
+  # has_and_belongs_to_many :taxons
+  # XXX for backwards compatibility
+  has_many :taxons, :finder_sql => 
+    'SELECT t.* ' + 
+    'FROM taxons t ' +
+    'INNER JOIN product_groups pg on pg.id = t.product_group_id ' +
+    'INNER JOIN product_group_lists pgl ' +
+    "ON pgl.id = pg.group_id AND pg.group_type = 'ProductGroupList' " +
+    'INNER JOIN product_group_list_nodes pgln ' +
+    'ON pgl.id = pgln.product_group_list_id ' +
+    'WHERE pgln.product_id = #{id}'
+
   belongs_to :shipping_category
-  
 
   validates_presence_of :name
   validates_presence_of :master_price
@@ -31,6 +43,9 @@ class Product < ActiveRecord::Base
 
   named_scope :with_property_value, lambda { |property_id, value| { :include => :product_properties, :conditions => ["product_properties.property_id = ? AND product_properties.value = ?", property_id, value] } }
 
+#  def product_groups
+#    product_group_lists.collect { |pgl| pgl.product_group }
+#  end
                  
   def to_param       
     return permalink unless permalink.blank?
@@ -93,8 +108,18 @@ class Product < ActiveRecord::Base
     end
   end
   
+  def active?(available_on = Date.today)
+    available_on? && not_deleted?
+  end
   
-  
+  def available?(available_on = Date.today)
+    Date.new(self.available_on) <= Date.new(available_on)
+  end
+
+  def not_deleted?
+    self.deleted_at.nil?
+  end
+
   private
 
     def adjust_inventory
