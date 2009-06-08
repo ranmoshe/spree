@@ -3,40 +3,10 @@
 module Spree::Checkout
 
   def checkout
-    build_object 
-    load_object 
-    load_data
-    load_checkout_steps                                             
 
-    if request.get?                     # default values needed for GET / first pass
-      @order.bill_address ||= Address.new(:country => @default_country)
-      @order.ship_address ||= Address.new(:country => @default_country) 
-
-      if @order.creditcard.nil?
-        @order.creditcard = Creditcard.new(:month => Date.today.month, :year => Date.today.year)
-      end
-    end
 
     unless request.get?                 # the proper processing
-      @order.initial_shipping_method = ShippingMethod.find_by_id(params[:method_id]) if params[:method_id]  
-      @method_id = params[:method_id]
-
-      # push the current record ids into the incoming params to allow nested_attribs to do update-in-place
-      if @order.bill_address && params[:order][:bill_address_attributes]
-        params[:order][:bill_address_attributes][:id] = @order.bill_address.id 
-      end
-      if @order.ship_address && params[:order][:ship_address_attributes]
-        params[:order][:ship_address_attributes][:id] = @order.ship_address.id 
-      end
-
-      # and now do the over-write, saving any new changes as we go
-      @order.update_attributes(params[:order])
     
-      # set some derived information
-      @order.user = current_user       
-      @order.email = current_user.email if @order.email.blank? && current_user
-      @order.ip_address = request.env['REMOTE_ADDR']
-      @order.update_totals  
 
       begin
         # need to check valid b/c we dump the creditcard info while saving
@@ -79,9 +49,4 @@ module Spree::Checkout
       
     end
   end
-  
-  def load_checkout_steps
-    @checkout_steps = %w{registration billing shipping shipping_method payment confirmation}
-    @checkout_steps.delete "registration" if current_user
-  end  
 end
