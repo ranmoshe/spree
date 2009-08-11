@@ -376,7 +376,7 @@ il:
   order_not_in_system: That order number is not valid on this site.
   order_number: Order
   order_operation_authorize: Authorize
-  order_processed_successfully: "Your order has been processed successfully"
+  order_processed_successfully: "ההזמנה התקבלה בהצלחה"
   order_total: "סכום כולל"
   order_total_message: "The total amount charged to your card will be"
   order_updated: "Order Updated"
